@@ -1,5 +1,6 @@
 # sudomu
 
+Sudoku in ClojureScript/Om. Try it out at http://sudomu.herokuapp.com/
 
 ## Development
 
