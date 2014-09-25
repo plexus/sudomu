@@ -61,23 +61,13 @@
 (defn handle-input [i]
   (swap! app-state #(assoc-in % (list* :input (:selected @app-state)) i)))
 
-(defn render-controls []
-  (apply dom/div #js {:className "controls"}
-         (map (fn [i] (dom/div #js {:className "control"
-                                   :onClick (fn [_] (handle-input i))} i))
-              (range 1 10))))
+(defn go-direction [dim f]
+  (swap! app-state update-in [:selected dim] #(rem (+ 9 (f %)) 9)))
 
-(defn go-right []
-  (swap! app-state #(update-in % [:selected 1] inc)))
-
-(defn go-left []
-  (swap! app-state #(update-in % [:selected 1] dec)))
-
-(defn go-up []
-  (swap! app-state #(update-in % [:selected 0] dec)))
-
-(defn go-down []
-  (swap! app-state #(update-in % [:selected 0] inc)))
+(defn go-right [] (go-direction 1 inc))
+(defn go-left [] (go-direction 1 dec))
+(defn go-up [] (go-direction 0 dec))
+(defn go-down [] (go-direction 0 inc))
 
 (om/root
  (fn [app owner]
@@ -85,21 +75,20 @@
      om/IDidMount
      (did-mount [_]
        (.addEventListener js/document "keydown" (fn [e]
+                                                  (println (.-keyCode e))
                                                   (cond
-                                                   (= "Right" (.-key e)) (go-right)
-                                                   (= "Left" (.-key e)) (go-left)
-                                                   (= "Up" (.-key e)) (go-up)
-                                                   (= "Down" (.-key e)) (go-down))
+                                                   (= 37 (.-keyCode e)) (go-left)
+                                                   (= 38 (.-keyCode e)) (go-up)
+                                                   (= 39 (.-keyCode e)) (go-right)
+                                                   (= 40 (.-keyCode e)) (go-down))
                                                   (let [keycode (.-keyCode e)]
                                                     (if (and (>= keycode 49) (<= keycode 57))
-                                                      (handle-input (js/parseInt (.-key e))))))))
+                                                      (handle-input (- (.-keyCode e) 48)))))))
 
      om/IRender
      (render [_]
        (dom/div nil
-                (render-board (app->board app))
-                ;;(render-controls)
-                ))))
+                (render-board (app->board app))))))
  app-state
  {:target (. js/document (getElementById "app"))})
 
@@ -108,4 +97,3 @@
  :jsload-callback (fn [] (print "reloaded")))
 
 (enable-console-print!)
-(println "foo")
